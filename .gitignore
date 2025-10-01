@@ -1,0 +1,58 @@
+# --- OS / IDE ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.lnk
+*.tmp
+~$*
+# VS Code / JetBrains
+.vscode/
+.idea/
+*.iml
+
+# --- Node.js ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json # якщо хочеш фіксувати залежності, видали цей рядок
+pnpm-lock.yaml    # (аналогічно)
+yarn.lock         # (аналогічно)
+
+# Білди / артефакти
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Енви / секрети
+.env
+.env.*
+!.env.example
+
+# --- Docker / Compose ---
+.docker/
+docker-compose.override.yml
+*.pid
+
+# Якщо з якоїсь причини серти/вебрут опиняться в робочій теці — не комітимо
+letsencrypt/
+compose/letsencrypt/
+certs/
+**/*.pem
+**/*.key
+**/*.crt
+**/*.csr
+
+# Basic auth (не комітимо справжні паролі)
+compose/auth/.htpasswd
+
+# --- Nginx / Logs ---
+logs/
+**/logs/
+*.log
+
+# --- Ansible ---
+*.retry
+ansible/.vault_pass.txt
