@@ -20,13 +20,12 @@ package-lock.json # якщо хочеш фіксувати залежності,
 pnpm-lock.yaml    # (аналогічно)
 yarn.lock         # (аналогічно)
 
-# Білди / артефакти
 dist/
 build/
 coverage/
 .nyc_output/
 
-# Енви / секрети
+
 .env
 .env.*
 !.env.example
@@ -36,7 +35,7 @@ coverage/
 docker-compose.override.yml
 *.pid
 
-# Якщо з якоїсь причини серти/вебрут опиняться в робочій теці — не комітимо
+# --- SSL / Certs ---
 letsencrypt/
 compose/letsencrypt/
 certs/
@@ -45,7 +44,7 @@ certs/
 **/*.crt
 **/*.csr
 
-# Basic auth (не комітимо справжні паролі)
+# Basic auth
 compose/auth/.htpasswd
 
 # --- Nginx / Logs ---
@@ -56,3 +55,4 @@ logs/
 # --- Ansible ---
 *.retry
 ansible/.vault_pass.txt
+inventory.ini

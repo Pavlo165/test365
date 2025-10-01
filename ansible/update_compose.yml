@@ -1,0 +1,71 @@
+# ansible/install_docker_min.yml
+- name: Update Docker Compose
+  hosts: all
+  become: true
+
+  vars:
+    project_dir: /opt/test365
+    local_repo_path: "{{ playbook_dir }}/.."
+    app_color: "#00c853"
+    host_port: 3001
+
+  tasks:
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
+    - name: Install Docker Engine and Compose v2
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+        state: present
+
+    - name: Enable & start Docker service
+      systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Add current user to docker group (use ansible_user)
+      user:
+        name: "{{ ansible_user | default('ubuntu') }}"
+        groups: docker
+        append: true
+    
+    - name: Ensure rsync is available on remote
+      apt:
+        name: rsync
+        state: present
+      become: true
+
+    - name: Ensure project dir exists
+      file:
+        path: "{{ project_dir }}"
+        state: directory
+
+    - name: Sync repo content to remote (rsync)
+      synchronize:
+        src: "{{ local_repo_path }}/"
+        dest: "{{ project_dir }}/"
+        delete: true
+        archive: true
+
+    - name: Write .env for compose substitution
+      copy:
+        dest: "{{ project_dir }}/.env"
+        mode: "0644"
+        content: |
+          APP_COLOR={{ app_color }}
+          HOST_PORT={{ host_port }}
+
+    - name: Compose up (build) using docker-compose v1 (shell)
+      shell: |
+        set -e
+        cd "{{ project_dir }}"
+        docker-compose up -d --build
+
+    - name: Show running containers
+      command: docker ps --format "table {{'{{'}}.Names{{'}}'}}\t{{'{{'}}.Status{{'}}'}}\t{{'{{'}}.Ports{{'}}'}}"
+      register: ps
+      changed_when: false
