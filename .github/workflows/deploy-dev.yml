@@ -1,0 +1,44 @@
+name: Deploy DEV
+
+on:
+  push:
+    branches: [ "dev" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      ANSIBLE_HOST_KEY_CHECKING: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Add remote host to known_hosts
+        run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Install Ansible (core 2.16)
+        run: |
+          pipx install "ansible-core==2.16.*"
+          ansible --version
+
+      - name: Create runtime inventory for CI
+        run: |
+          mkdir -p ansible
+          cat > ansible/inventory.ci.ini <<'EOF'
+          [all]
+          vm ansible_host=${{ secrets.SSH_HOST }} ansible_user=${{ secrets.SSH_USER }} ansible_ssh_private_key_file=~/.ssh/id_rsa ansible_python_interpreter=/usr/bin/python3
+          EOF
+
+      - name: Deploy via Ansible
+        run: |
+          ansible-playbook -i ansible/inventory.ci.ini ansible/update_compose.yml \
+            -e project_dir=/opt/test365 \
+            -e app_color="#00c853" \
+            -e host_port=3001
