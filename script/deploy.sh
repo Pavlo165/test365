@@ -1,4 +1,3 @@
-azureuser@vm-test-task:~$ cat deploy.sh
 #!/bin/bash
 
 BRANCH=$1
