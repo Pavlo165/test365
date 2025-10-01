@@ -12,7 +12,7 @@ app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 app.get('/', (_req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(`<!DOCTYPE html>
-  <html><head><meta charset="utf-8"><title>Hello world</title>
+  <html><head><meta charset="utf-8"><title>Hello</title>
     <style>
       html,body{height:100%;margin:0}
       body{

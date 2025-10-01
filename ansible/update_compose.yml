@@ -1,45 +1,76 @@
-# ansible/install_docker_min.yml
-- name: Update Docker Compose
+# ansible/update_compose.yml
+- name: Install Docker (official repo) + Compose v2 via APT and deploy
   hosts: all
   become: true
+  gather_facts: true
 
   vars:
     project_dir: /opt/test365
     local_repo_path: "{{ playbook_dir }}/.."
-    app_color: "#00c853"
+    app_color: "#00c853"                       
     host_port: 3001
+    arch_map:
+      x86_64: amd64
+    docker_arch: "{{ arch_map.get(ansible_architecture, ansible_architecture) }}"
+    ubuntu_codename: "{{ ansible_distribution_release }}"                       
 
-  tasks:
-    - name: Update APT cache
+  pre_tasks:
+    - name: Ensure base packages
+      apt:
+        name:
+          - ca-certificates
+          - curl
+        state: present
+        update_cache: yes
+
+    - name: Create keyrings dir
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker GPG key
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: "deb [arch={{ docker_arch }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ubuntu_codename }} stable"
+        filename: docker
+        state: present
+
+    - name: apt update after adding Docker repo
       apt:
         update_cache: yes
 
-    - name: Install Docker Engine and Compose v2
+  tasks:
+    - name: Install Docker Engine
       apt:
         name:
           - docker.io
-          - docker-compose
+          - docker-compose-plugin
         state: present
 
-    - name: Enable & start Docker service
+    - name: Enable & start Docker
       systemd:
         name: docker
         enabled: true
         state: started
 
-    - name: Add current user to docker group (use ansible_user)
+    - name: Add current user to docker group
       user:
         name: "{{ ansible_user | default('ubuntu') }}"
         groups: docker
         append: true
-    
-    - name: Ensure rsync is available on remote
+
+    - name: Ensure rsync is present
       apt:
         name: rsync
         state: present
-      become: true
 
-    - name: Ensure project dir exists
+    - name: Ensure project dir exists on remote
       file:
         path: "{{ project_dir }}"
         state: directory
@@ -59,13 +90,9 @@
           APP_COLOR={{ app_color }}
           HOST_PORT={{ host_port }}
 
-    - name: Compose up (build) using docker-compose v1 (shell)
+    - name: Deploy via docker compose v2
       shell: |
         set -e
         cd "{{ project_dir }}"
-        docker-compose up -d --build
+        DOCKER_BUILDKIT=1 docker compose up -d --build
 
-    - name: Show running containers
-      command: docker ps --format "table {{'{{'}}.Names{{'}}'}}\t{{'{{'}}.Status{{'}}'}}\t{{'{{'}}.Ports{{'}}'}}"
-      register: ps
-      changed_when: false
