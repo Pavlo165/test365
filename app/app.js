@@ -23,7 +23,7 @@ app.get('/', (_req, res) => {
       }
     </style>
   </head>
-  <body><h1>Hello</h1></body></html>`);
+  <body><h1>Hello world</h1></body></html>`);
 });
 
 app.listen(port, () => {
